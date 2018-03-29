@@ -1,4 +1,4 @@
-package org.springframework.batch.mongodb.test;
+package org.ogerardin.springframework.batch.core.repository.dao.mongodb;
 
 
 import org.junit.Test;

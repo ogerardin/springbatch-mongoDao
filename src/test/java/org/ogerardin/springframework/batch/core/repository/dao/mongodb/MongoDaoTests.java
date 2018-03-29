@@ -1,4 +1,4 @@
-package org.springframework.batch.mongodb.test;
+package org.ogerardin.springframework.batch.core.repository.dao.mongodb;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -23,7 +23,7 @@ public class MongoDaoTests extends AbstractJobDaoTests{
 
 
     @Test
-    public void testGetNextId() {
+    public void     testGetNextId() {
     	mongoTemplate.getDb().dropDatabase();
         for (long i = 1; i <= 100; i++) {        	
         	JobInstance ji = jobInstanceDao.createJobInstance("testJob_" + i, new JobParameters());

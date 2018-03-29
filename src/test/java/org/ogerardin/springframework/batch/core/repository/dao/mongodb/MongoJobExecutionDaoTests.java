@@ -1,4 +1,4 @@
-package org.springframework.batch.mongodb.test;
+package org.ogerardin.springframework.batch.core.repository.dao.mongodb;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -287,13 +287,13 @@ public class MongoJobExecutionDaoTests{
         jobExecutionDao.saveJobExecution(exec1);
 
         JobExecution exec2 = new JobExecution(jobInstance, null);
-        Assert.state(exec1.getId() != null);
+        Assert.state(exec1.getId() != null, "id not null");
         exec2.setId(exec1.getId());
 
         exec2.setStatus(BatchStatus.STARTED);
         exec2.setVersion(7);
-        Assert.state(!exec1.getVersion().equals(exec2.getVersion()));
-        Assert.state(exec1.getStatus() != exec2.getStatus());
+        Assert.state(!exec1.getVersion().equals(exec2.getVersion()), "version is different");
+        Assert.state(exec1.getStatus() != exec2.getStatus(), "status is different");
 
         jobExecutionDao.synchronizeStatus(exec2);
 
@@ -313,13 +313,13 @@ public class MongoJobExecutionDaoTests{
         jobExecutionDao.saveJobExecution(exec1);
 
         JobExecution exec2 = new JobExecution(jobInstance, null);
-        Assert.state(exec1.getId() != null);
+        Assert.state(exec1.getId() != null, "id is not null");
         exec2.setId(exec1.getId());
 
         exec2.setStatus(BatchStatus.UNKNOWN);
         exec2.setVersion(7);
-        Assert.state(!exec1.getVersion().equals(exec2.getVersion()));
-        Assert.state(exec1.getStatus().isLessThan(exec2.getStatus()));
+        Assert.state(!exec1.getVersion().equals(exec2.getVersion()), "version is different");
+        Assert.state(exec1.getStatus().isLessThan(exec2.getStatus()), "status is different");
 
         jobExecutionDao.synchronizeStatus(exec2);
 

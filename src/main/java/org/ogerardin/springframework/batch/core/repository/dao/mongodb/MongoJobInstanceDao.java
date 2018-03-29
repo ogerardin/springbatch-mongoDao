@@ -1,20 +1,9 @@
-package org.springframework.batch.mongodb;
+package org.ogerardin.springframework.batch.core.repository.dao.mongodb;
 
 
-import static com.mongodb.BasicDBObjectBuilder.start;
-
-import java.io.UnsupportedEncodingException;
-import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.PostConstruct;
-
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBCursor;
+import com.mongodb.DBObject;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobInstance;
 import org.springframework.batch.core.JobParameter;
@@ -25,31 +14,33 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.Assert;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBCollection;
-import com.mongodb.DBCursor;
-import com.mongodb.DBObject;
+import javax.annotation.PostConstruct;
+import java.io.UnsupportedEncodingException;
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.*;
+
+import static com.mongodb.BasicDBObjectBuilder.start;
 
 /**
  * Uses MongoTemplate to perform CRUD on Springbatch's Job Instance Data to
  * Mongo DB. <br/>MongoTemplate needs to be set as a property during bean definition
- * 
+ *
  * @author Baruch S.
- * @authoer vfouzdar
+ * @author vfouzdar
+ * @author ogerardin
  */
 @Repository
-public class MongoJobInstanceDao extends AbstractMongoDao implements JobInstanceDao {
+public class MongoJobInstanceDao extends AbstractMongoBatchMetadataDao implements JobInstanceDao {
 
-	 private MongoTemplate mongoTemplate;
-	 
-	 public void setMongoTemplate(MongoTemplate mongoTemplate){
-		this.mongoTemplate = mongoTemplate; 
-	 }
-	 
-	 
+    public MongoJobInstanceDao(MongoTemplate mongoTemplate) {
+        super(mongoTemplate, JobInstance.class);
+    }
+
     @PostConstruct
     public void init() {
-        getCollection().ensureIndex(jobInstanceIdObj(1L));
+        getCollection().createIndex(jobInstanceIdObj(1L));
     }
 
     public JobInstance createJobInstance(String jobName, final JobParameters jobParameters) {
@@ -95,7 +86,9 @@ public class MongoJobInstanceDao extends AbstractMongoDao implements JobInstance
     }
 
     public JobInstance getJobInstance(JobExecution jobExecution) {
-        DBObject instanceId = mongoTemplate.getCollection(JobExecution.class.getSimpleName()).findOne(jobExecutionIdObj(jobExecution.getId()), jobInstanceIdObj(1L));
+        DBObject instanceId = mongoTemplate
+                .getCollection(collectionName(JobExecution.class))
+                .findOne(jobExecutionIdObj(jobExecution.getId()), jobInstanceIdObj(1L));
         removeSystemFields(instanceId);
         return mapJobInstance(getCollection().findOne(instanceId));
     }
@@ -139,11 +132,6 @@ public class MongoJobInstanceDao extends AbstractMongoDao implements JobInstance
         }
     }
 
-    @Override
-    protected DBCollection getCollection() {
-        return mongoTemplate.getCollection(JobInstance.class.getSimpleName());
-    }
-
     private List<JobInstance> mapJobInstances(DBCursor dbCursor) {
         List<JobInstance> results = new ArrayList<JobInstance>();
         while (dbCursor.hasNext()) {
@@ -163,7 +151,7 @@ public class MongoJobInstanceDao extends AbstractMongoDao implements JobInstance
             if (jobParameters == null) {
                 jobParameters = getJobParameters(id, mongoTemplate);
             }
-            
+
             jobInstance = new JobInstance(id, (String) dbObject.get(JOB_NAME_KEY)); // should always be at version=0 because they never get updated
             jobInstance.incrementVersion();
         }
@@ -171,45 +159,78 @@ public class MongoJobInstanceDao extends AbstractMongoDao implements JobInstance
     }
 
 
-	@Override
-	public List<JobInstance> findJobInstancesByName(String jobName, int start,
-			int count) {
-		List<JobInstance> result = new ArrayList<JobInstance>();
-		List<JobInstance> jobInstances = mapJobInstances(getCollection().find(
-				new BasicDBObject(JOB_NAME_KEY, jobName)).sort(
-				jobInstanceIdObj(-1L)));
-		for (JobInstance instanceEntry : jobInstances) {
-			String key = instanceEntry.getJobName();
-			String curJobName = key.substring(0, key.lastIndexOf("|"));
+    @Override
+    public List<JobInstance> findJobInstancesByName(String jobName, int start,
+                                                    int count) {
+        List<JobInstance> result = new ArrayList<JobInstance>();
+        List<JobInstance> jobInstances = mapJobInstances(getCollection().find(
+                new BasicDBObject(JOB_NAME_KEY, jobName)).sort(
+                jobInstanceIdObj(-1L)));
+        for (JobInstance instanceEntry : jobInstances) {
+            String key = instanceEntry.getJobName();
+            String curJobName = key.substring(0, key.lastIndexOf("|"));
 
-			if(curJobName.equals(jobName)) {
-				result.add(instanceEntry);
-			}
-		}
-		return result;
-	}
+            if (curJobName.equals(jobName)) {
+                result.add(instanceEntry);
+            }
+        }
+        return result;
+    }
 
-	@Override
-	public int getJobInstanceCount(String jobName) throws NoSuchJobException {
+    @Override
+    public int getJobInstanceCount(String jobName) throws NoSuchJobException {
 
-		int count = 0;
-		List<JobInstance> jobInstances = mapJobInstances(getCollection().find(
-				new BasicDBObject(JOB_NAME_KEY, jobName)).sort(
-				jobInstanceIdObj(-1L)));
-		for (JobInstance instanceEntry : jobInstances) {
-			String key = instanceEntry.getJobName();
-			String curJobName = key.substring(0, key.lastIndexOf("|"));
+        int count = 0;
+        List<JobInstance> jobInstances = mapJobInstances(getCollection().find(
+                new BasicDBObject(JOB_NAME_KEY, jobName)).sort(
+                jobInstanceIdObj(-1L)));
+        for (JobInstance instanceEntry : jobInstances) {
+            String key = instanceEntry.getJobName();
+            String curJobName = key.substring(0, key.lastIndexOf("|"));
 
-			if(curJobName.equals(jobName)) {
-				count++;
-			}
-		}
+            if (curJobName.equals(jobName)) {
+                count++;
+            }
+        }
 
-		if(count == 0) {
-			throw new NoSuchJobException("No job instances for job name " + jobName + " were found");
-		} else {
-			return count;
-		}
-	}
+        if (count == 0) {
+            throw new NoSuchJobException("No job instances for job name " + jobName + " were found");
+        } else {
+            return count;
+        }
+    }
+
+    @SuppressWarnings({"unchecked"})
+    static JobParameters getJobParameters(Long jobInstanceId, MongoTemplate mongoTemplate) {
+        DBObject jobParamObj = mongoTemplate
+                .getCollection(collectionName(JobInstance.class))
+                .findOne(jobInstanceIdObj(jobInstanceId));
+
+        if (jobParamObj != null && jobParamObj.get(JOB_PARAMETERS_KEY) != null) {
+
+            Map<String, ?> jobParamsMap = (Map<String, ?>) jobParamObj.get(JOB_PARAMETERS_KEY);
+
+            Map<String, JobParameter> map = new HashMap<String, JobParameter>(
+                    jobParamsMap.size());
+            for (Map.Entry<String, ?> entry : jobParamsMap.entrySet()) {
+                Object param = entry.getValue();
+                String key = entry.getKey().replaceAll(DOT_ESCAPE_STRING, DOT_STRING);
+                if (param instanceof String) {
+                    map.put(key, new JobParameter((String) param));
+                } else if (param instanceof Long) {
+                    map.put(key, new JobParameter((Long) param));
+                } else if (param instanceof Double) {
+                    map.put(key, new JobParameter((Double) param));
+                } else if (param instanceof Date) {
+                    map.put(key, new JobParameter((Date) param));
+                } else {
+                    map.put(key, null);
+                }
+            }
+            return new JobParameters(map);
+        }
+        return null;
+    }
+
 
 }

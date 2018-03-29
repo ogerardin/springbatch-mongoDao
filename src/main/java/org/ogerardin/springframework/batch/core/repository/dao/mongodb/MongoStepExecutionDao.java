@@ -1,17 +1,7 @@
-package org.springframework.batch.mongodb;
+package org.ogerardin.springframework.batch.core.repository.dao.mongodb;
 
 
-
-import static com.mongodb.BasicDBObjectBuilder.start;
-import static org.springframework.util.Assert.notNull;
-
-import java.util.Collection;
-import java.util.Date;
-
-import javax.annotation.PostConstruct;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.mongodb.*;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.JobExecution;
@@ -22,33 +12,30 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.Assert;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.BasicDBObjectBuilder;
-import com.mongodb.DBCollection;
-import com.mongodb.DBCursor;
-import com.mongodb.DBObject;
+import javax.annotation.PostConstruct;
+import java.util.Collection;
+import java.util.Date;
+
+import static com.mongodb.BasicDBObjectBuilder.start;
 
 /**
  * Uses MongoTemplate to perform CRUD on Springbatch's Step Execution Data to
  * Mongo DB. <br/>MongoTemplate needs to be set as a property during bean definition
- * 
+ *
  * @author Baruch S.
- * @authoer vfouzdar
+ * @author vfouzdar
+ * @author ogerardin
  */
 @Repository
-public class MongoStepExecutionDao extends AbstractMongoDao implements StepExecutionDao {
-    
-    private static final Logger LOG = LoggerFactory.getLogger(MongoStepExecutionDao.class);
-    
-	private MongoTemplate mongoTemplate;
-	    
-    public void setMongoTemplate(MongoTemplate mongoTemplate) {
-		this.mongoTemplate = mongoTemplate;
-	}
+public class MongoStepExecutionDao extends AbstractMongoBatchMetadataDao implements StepExecutionDao {
 
-	@PostConstruct
+    public MongoStepExecutionDao(MongoTemplate mongoTemplate) {
+        super(mongoTemplate, StepExecution.class);
+    }
+
+    @PostConstruct
     public void init() {
-        getCollection().ensureIndex(BasicDBObjectBuilder.start().add(STEP_EXECUTION_ID_KEY, 1).add(JOB_EXECUTION_ID_KEY, 1).get());
+        getCollection().createIndex(BasicDBObjectBuilder.start().add(STEP_EXECUTION_ID_KEY, 1).add(JOB_EXECUTION_ID_KEY, 1).get());
 
     }
 
@@ -96,15 +83,15 @@ public class MongoStepExecutionDao extends AbstractMongoDao implements StepExecu
         Integer newVersion = currentVersion + 1;
         DBObject object = toDbObjectWithoutVersion(stepExecution);
         object.put(VERSION_KEY, newVersion);
-        getCollection().update(start()
-                .add(STEP_EXECUTION_ID_KEY, stepExecution.getId())
-                .add(VERSION_KEY, currentVersion).get(),
+        WriteResult writeResult = getCollection().update(start()
+                        .add(STEP_EXECUTION_ID_KEY, stepExecution.getId())
+                        .add(VERSION_KEY, currentVersion).get(),
                 object);
 
         // Avoid concurrent modifications...
-        DBObject lastError = mongoTemplate.getDb().getLastError();
-        if (!((Boolean) lastError.get(UPDATED_EXISTING_STATUS))) {
-            LOG.error("Update returned status {}", lastError);
+//        DBObject lastError = mongoTemplate.getDb().getLastError();
+        if (!writeResult.isUpdateOfExisting()) {
+//            LOG.error("Update returned status {}", lastError);
             DBObject existingStepExecution = getCollection().findOne(stepExecutionIdObj(stepExecution.getId()), new BasicDBObject(VERSION_KEY, 1));
             if (existingStepExecution == null) {
                 throw new IllegalArgumentException("Can't update this stepExecution, it was never saved.");
@@ -162,25 +149,20 @@ public class MongoStepExecutionDao extends AbstractMongoDao implements StepExecu
         }
     }
 
-    @Override
-    protected DBCollection getCollection() {
-        return mongoTemplate.getCollection(StepExecution.class.getSimpleName());
-    }
-
     private void validateStepExecution(StepExecution stepExecution) {
-        notNull(stepExecution);
-        notNull(stepExecution.getStepName(), "StepExecution step name cannot be null.");
-        notNull(stepExecution.getStartTime(), "StepExecution start time cannot be null.");
-        notNull(stepExecution.getStatus(), "StepExecution status cannot be null.");
+        Assert.notNull(stepExecution, "StepExecution cannot be null.");
+        Assert.notNull(stepExecution.getStepName(), "StepExecution step name cannot be null.");
+        Assert.notNull(stepExecution.getStartTime(), "StepExecution start time cannot be null.");
+        Assert.notNull(stepExecution.getStatus(), "StepExecution status cannot be null.");
     }
 
-	@Override
-	public void saveStepExecutions(Collection<StepExecution> stepExecutions) {
-		Assert.notNull(stepExecutions,"Attempt to save an null collect of step executions");
-		for (StepExecution stepExecution: stepExecutions) {
-			saveStepExecution(stepExecution);
-		}
-		
-	}
+    @Override
+    public void saveStepExecutions(Collection<StepExecution> stepExecutions) {
+        Assert.notNull(stepExecutions, "Attempt to save an null collect of step executions");
+        for (StepExecution stepExecution : stepExecutions) {
+            saveStepExecution(stepExecution);
+        }
+
+    }
 
 }

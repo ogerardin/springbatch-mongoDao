@@ -1,11 +1,7 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xmlns:mongo="http://www.springframework.org/schema/data/mongo"
-	xmlns:context="http://www.springframework.org/schema/context"
-    xmlns:tx="http://www.springframework.org/schema/tx"
-    xmlns:util="http://www.springframework.org/schema/util"
-    xmlns:aop="http://www.springframework.org/schema/aop"
-	xsi:schemaLocation="
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:mongo="http://www.springframework.org/schema/data/mongo"
+       xsi:schemaLocation="
 		http://www.springframework.org/schema/beans 
 		http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
 		http://www.springframework.org/schema/data/mongo
@@ -21,27 +17,27 @@
 	</bean>
 	
 	<bean id="executionContextDao"
-		class="org.springframework.batch.mongodb.MongoExecutionContextDao">
-		<property name="mongoTemplate" ref="mongoTemplate" />
+		class="org.ogerardin.springframework.batch.core.repository.dao.mongodb.MongoExecutionContextDao">
+		<constructor-arg name="mongoTemplate" ref="mongoTemplate" />
 	</bean>
 	
 	<bean id="jobExecutionDao"
-		class="org.springframework.batch.mongodb.MongoJobExecutionDao">
-		<property name="mongoTemplate" ref="mongoTemplate" />
+		class="org.ogerardin.springframework.batch.core.repository.dao.mongodb.MongoJobExecutionDao">
+		<constructor-arg name="mongoTemplate" ref="mongoTemplate" />
 	</bean>
 	
 	<bean id="jobInstanceDao"
-		class="org.springframework.batch.mongodb.MongoJobInstanceDao">
-		<property name="mongoTemplate" ref="mongoTemplate" />
+		class="org.ogerardin.springframework.batch.core.repository.dao.mongodb.MongoJobInstanceDao">
+		<constructor-arg name="mongoTemplate" ref="mongoTemplate" />
 	</bean>
 	
 	<bean id="stepExecutionDao"
-		class="org.springframework.batch.mongodb.MongoStepExecutionDao">
-		<property name="mongoTemplate" ref="mongoTemplate" />
+		class="org.ogerardin.springframework.batch.core.repository.dao.mongodb.MongoStepExecutionDao">
+		<constructor-arg name="mongoTemplate" ref="mongoTemplate" />
 	</bean>
 		
 	<bean id="jobRepository"
-		class="org.springframework.batch.mongodb.MongoJobRepositoryFactoryBean">
+		class="org.ogerardin.springframework.batch.core.repository.dao.mongodb.MongoJobRepositoryFactoryBean">
 		<property name="transactionManager" ref="transactionManager" />		
 		<property name="stepExecutionDao" ref="stepExecutionDao" />
 		<property name="jobExecutionDao" ref="jobExecutionDao" />

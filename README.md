@@ -1,12 +1,19 @@
-springbatch-mongoDao
+springframework-batch-dao-mongodb
 ====================
 
-Java API to store Spring Batch (version 3+) job execution data in MongoDB. <br/>
-	- Spring Batch: version 3+<br/>
-	- Spring ore: version 4 +<br/>
-	- Mongo DB driver: 2.11.2<br/>
+Spring Batch meta-data persistency DAOs implementation over MongoDB. 
+
+Dependencies:
+* Spring Core 4.3+
+* Spring Batch 3.0+
+* Spring Data 1.10+
+* Mongo DB driver 3.4+
+
+
+Adapted from [vfouzdar](https://github.com/vfouzdar)'s [springbatch-mongoDao](https://github.com/vfouzdar/springbatch-mongoDao), which itself was an enhancement to 
+[JBaruch](https://github.com/jbaruch)'s [springbatch-over-mongodb](https://github.com/jbaruch/springbatch-over-mongodb) 
+created for earlier versions of SpringBatch (version ~2) and Spring framework (version ~3).
+
 	
-Refer Junits and test-context.xml for usage instructions.
-	
-This project is an enhancement to JBaruch's springbatch-over-mongodb (https://github.com/vfouzdar/springbatch-over-mongodb) created for earlier versions of SpringBatch (version ~2) and Spring framework (version ~3).
+Refer to Junits and test-context.xml for usage instructions.
 

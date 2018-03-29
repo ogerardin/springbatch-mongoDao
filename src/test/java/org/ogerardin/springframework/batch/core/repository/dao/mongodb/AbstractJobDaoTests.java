@@ -14,21 +14,17 @@
  * limitations under the License.
  */
 
-package org.springframework.batch.mongodb.test;
+package org.ogerardin.springframework.batch.core.repository.dao.mongodb;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.batch.core.*;
 import org.springframework.batch.core.repository.dao.JobExecutionDao;
 import org.springframework.batch.core.repository.dao.JobInstanceDao;
 import org.springframework.batch.core.repository.dao.NoSuchObjectException;
-import org.springframework.batch.mongodb.AbstractMongoDao;
-import org.springframework.batch.mongodb.MongoExecutionContextDao;
-import org.springframework.batch.mongodb.MongoJobInstanceDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
@@ -106,9 +102,9 @@ public abstract class AbstractJobDaoTests {
 	private int getVersion(String collectionName, Long id, String idKey) {
 		DBObject dbObject = mongoTemplate.getCollection(collectionName)
 				.findOne(new BasicDBObject(idKey, id),
-						new BasicDBObject(AbstractMongoDao.VERSION_KEY, 1));
+						new BasicDBObject(AbstractMongoBatchMetadataDao.VERSION_KEY, 1));
 		return dbObject == null ? 0 : (Integer) dbObject
-				.get(AbstractMongoDao.VERSION_KEY);
+				.get(AbstractMongoBatchMetadataDao.VERSION_KEY);
 	}
 
 	@Test
@@ -220,7 +216,7 @@ public abstract class AbstractJobDaoTests {
 		// Create job.
 		jobInstance = jobInstanceDao.createJobInstance(testJob, jobParameters);
 		DBObject dbObject = mongoTemplate.getCollection(
-				JobInstance.class.getSimpleName()).findOne(
+                AbstractMongoBatchMetadataDao.collectionName(JobInstance.class)).findOne(
 				new BasicDBObject(MongoJobInstanceDao.JOB_INSTANCE_ID_KEY,
 						jobInstance.getId()));
 		assertEquals("test", dbObject.get(MongoJobInstanceDao.JOB_NAME_KEY));
@@ -239,7 +235,7 @@ public abstract class AbstractJobDaoTests {
 
 		assertNotNull(instance);
 		DBCursor dbCursor = mongoTemplate.getCollection(
-				JobInstance.class.getSimpleName())
+				AbstractMongoBatchMetadataDao.collectionName(JobInstance.class))
 				.find(
 						new BasicDBObject().append(
 								MongoJobInstanceDao.JOB_INSTANCE_ID_KEY,

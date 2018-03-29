@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.springframework.batch.mongodb.test;
+package org.ogerardin.springframework.batch.core.repository.dao.mongodb;
 
 
 import org.junit.Before;
@@ -23,7 +23,7 @@ import org.junit.runner.RunWith;
 import org.springframework.batch.core.*;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.repository.dao.StepExecutionDao;
-import org.springframework.batch.mongodb.test.support.StepSupport;
+import org.ogerardin.springframework.batch.core.repository.dao.mongodb.support.StepSupport;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.mongodb.core.MongoTemplate;
